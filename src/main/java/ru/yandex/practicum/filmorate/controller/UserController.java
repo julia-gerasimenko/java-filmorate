@@ -34,7 +34,6 @@ public class UserController {
         users.put(userId, user);
         userId++;
         log.info("Пользователь {} был успешно добавлен", user);
-
         return user;
     }
 
