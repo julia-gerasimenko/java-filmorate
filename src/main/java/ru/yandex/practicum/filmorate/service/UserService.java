@@ -41,51 +41,35 @@ public class UserService {
     }
 
     public User getUserById(long id) {
-        Optional<User> user = userStorage.getUserById(id);
-        if (user.isPresent()) {
-            log.info("Получен пользователь с id = {}", id);
-            return user.get();
-        } else {
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        }
+        User user = userStorage.getUserById(id).orElseThrow(() ->
+                new NotFoundException("Пользователь с id = " + id + " не найден"));
+        log.info("Получен пользователь с id = {}", id);
+        return user;
     }
 
 
-    public void addFriend(Long id, Long friendId) {
+    public User addFriend(Long id, Long friendId) {
         User user = getUserById(id);
         if (user.getFriends().contains(friendId)) {
-            log.info("Пользователь с id = {} {} {}", friendId, " был добавлен в друзья к пользователю с id = {}", id);
-            throw new ValidationException(HttpStatus.BAD_REQUEST, "User " + id + " and the user " + friendId +
-                    "have been friends yet ");
+            log.info("Пользователь с id " + id
+                    + " и пользователь с id " + friendId + "уже являются друзьями");
+            throw new ValidationException(HttpStatus.BAD_REQUEST, "Пользователь с id " + id
+                    + " и пользователь с id " + friendId + "уже являются друзьями");
         }
-        User friend = getUserById(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(id);
-
-        log.info("Пользователь с id = {} {} {}", friendId, " был добавлен в друзья к пользователю с id = ", id);
-        log.info("Пользователь с id = {} {} {}", id, " был добавлен в друзья к пользователю с id = ", friendId);
+        return userStorage.addFriend(id, friendId);
     }
 
-    public void removeFriendById(long id, long friendId) {
-        User user = getUserById(id);
-        log.info("Пользователь с id = {}{}{}", friendId, " был удален из друзей у пользователей с id = ", id);
-        user.getFriends().remove(friendId);
+    public User removeFriendById(long id, long friendId) {
+        return userStorage.removeFriendById(id, friendId);
     }
 
-    public List<User> getAllFriends(long id) {
-        List<User> allFriends = getUserById(id).getFriends()
-                .stream()
-                .map(this::getUserById)
-                .collect(Collectors.toList());
-        log.info("Получено всего {} друзей у пользователя с id = {}", allFriends.size(), id);
-        return allFriends;
+    public List<Optional<User>> getAllFriends(long id) {
+        log.info("Получено всего {} друзей у пользователя с id = {}", userStorage.getAllFriends(id).size(), id);
+        return userStorage.getAllFriends(id);
     }
 
-    public List<User> getCommonFriends(long userId, long friendId) {
-        log.info("Получены общие друзья пользователей с id = {} и id = {}", userId, friendId);
-        List<User> friends = getAllFriends(userId);
-        friends.retainAll(getAllFriends(friendId));
-        return friends;
+    public List<Optional<User>> getCommonFriends(long userId, long friendId) {
+        return userStorage.getCommonFriends(userId,friendId);
     }
 
     public void validateUserName(User user) {
