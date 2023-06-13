@@ -11,9 +11,11 @@ import java.util.Set;
 @Data
 public class User {
     private long id;
+
     @Email(message = "Email введен неверно")
     @NotEmpty(message = "Email не может быть пустым")
     private String email;
+
     @Pattern(regexp = "^\\S*", message = "логин не может содержать пробелы")
     @NotBlank(message = "логин не может быть пустым")
     private String login;
@@ -22,8 +24,5 @@ public class User {
     @NotNull(message = "дата рождения не может быть пустой")
     @PastOrPresent(message = "дата рождения не может быть в будущем")
     private LocalDate birthday;
-
-    @JsonIgnore
-    final Set<Long> friends = new HashSet<>();
 }
 

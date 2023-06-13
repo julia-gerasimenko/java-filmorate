@@ -14,14 +14,4 @@ public interface UserStorage {
     List<User> getAllUsers();
 
     User updateUser(User user);
-
-    // TODO снизу лишнее???
-
-    User addFriend(Long id, Long friendId);
-
-    User removeFriendById(long id, long friendId);
-
-    List<Optional<User>> getAllFriends(long id);
-
-    List<Optional<User>> getCommonFriends(long userId, long friendId);
 }
