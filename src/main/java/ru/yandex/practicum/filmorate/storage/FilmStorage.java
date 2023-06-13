@@ -16,6 +16,8 @@ public interface FilmStorage {
 
     List<Film> getFavoriteFilms(Integer number);
 
+    //TODO лишнее?
+
     Film removeLikes(int filmId, int userId);
 
     Film addLikes(int filmId, long userId);

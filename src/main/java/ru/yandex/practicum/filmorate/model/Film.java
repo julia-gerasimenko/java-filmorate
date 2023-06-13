@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.validation.FilmReleaseDate;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -33,4 +35,16 @@ public class Film {
 
     @JsonIgnore
     final Set<Integer> likes = new HashSet<>();
+
+    @Valid
+    @NotNull
+    private Mpa mpa;
+    private LinkedHashSet<Genre> genres;
+
+    public void addGenre(Genre genre) {
+        if (genres == null) {
+            genres = new LinkedHashSet<>();
+        }
+        genres.add(genre);
+    }
 }

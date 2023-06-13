@@ -15,6 +15,8 @@ public interface UserStorage {
 
     User updateUser(User user);
 
+    // TODO снизу лишнее???
+
     User addFriend(Long id, Long friendId);
 
     User removeFriendById(long id, long friendId);
