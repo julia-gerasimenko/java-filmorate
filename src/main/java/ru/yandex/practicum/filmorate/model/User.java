@@ -1,13 +1,14 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
+@Builder
+@AllArgsConstructor
 @Data
 public class User {
     private long id;
@@ -19,6 +20,7 @@ public class User {
     @Pattern(regexp = "^\\S*", message = "логин не может содержать пробелы")
     @NotBlank(message = "логин не может быть пустым")
     private String login;
+
     private String name;
 
     @NotNull(message = "дата рождения не может быть пустой")

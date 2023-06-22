@@ -6,7 +6,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.util.List;
 import java.util.Optional;
 
-public interface GenreStorage {
+public interface GenreDao {
 
 
     void createFilmGenre(Film film);
