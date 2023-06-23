@@ -21,14 +21,14 @@ public class FriendDaoImpl implements FriendDao {
 
     @Override
     public void addFriend(long id, long friendId) {
-        String sqlQuery = "INSERT INTO friendship (user_id,friend_user_id) VALUES (?,?)";
+        String sqlQuery = "INSERT INTO friends (user_id,friend_user_id) VALUES (?,?)";
         log.info("Добавлен друг с id = {} пользователю с id = {}", friendId, id);
         jdbcTemplate.update(sqlQuery, id, friendId);
     }
 
     @Override
     public void deleteFriend(long id, long friendId) {
-        String sqlQuery = "DELETE FROM friendship WHERE user_id = ? AND friend_user_id = ?";
+        String sqlQuery = "DELETE FROM friends WHERE user_id = ? AND friend_user_id = ?";
         log.info("Удален друг с id = {} у пользователя с id = {}", friendId, id);
         jdbcTemplate.update(sqlQuery, id, friendId);
     }
@@ -36,8 +36,8 @@ public class FriendDaoImpl implements FriendDao {
     @Override
     public List<User> getCommonFriends(long id, long friendId) {
         String sqlQuery = "SELECT * FROM users " +
-                "WHERE id IN (SELECT friend_user_id FROM friendship WHERE user_id = ?) " +
-                "AND id IN (SELECT friend_user_id FROM friendship WHERE user_id = ?)";
+                "WHERE id IN (SELECT friend_user_id FROM friends WHERE user_id = ?) " +
+                "AND id IN (SELECT friend_user_id FROM friends WHERE user_id = ?)";
         SqlRowSet rs = jdbcTemplate.queryForRowSet(sqlQuery, id, friendId);
         List<User> commonFriends = new ArrayList<>();
         while (rs.next()) {
@@ -54,7 +54,7 @@ public class FriendDaoImpl implements FriendDao {
     @Override
     public List<User> getAllFriends(long id) {
         String sqlQuery = "SELECT * FROM users WHERE id IN " +
-                "(SELECT friend_user_id AS id FROM friendship WHERE user_id = ?)";
+                "(SELECT friend_user_id AS id FROM friends WHERE user_id = ?)";
         SqlRowSet rs = jdbcTemplate.queryForRowSet(sqlQuery, id);
         List<User> friends = new ArrayList<>();
         while (rs.next()) {
