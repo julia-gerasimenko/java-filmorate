@@ -18,6 +18,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -43,7 +45,7 @@ public class FilmDaoImpl implements FilmDao {
         film.setId(Objects.requireNonNull(id.getKey()).intValue());
         createFilmGenre(film);
         log.info("Добавлен новый фильм с id = {}", film.getId());
-        return film;
+        return getFilmById(film.getId()).orElseThrow();
     }
 
     private void createFilmGenre(Film film) {
@@ -66,7 +68,7 @@ public class FilmDaoImpl implements FilmDao {
                         return film.getGenres().size();
                     }
                 });
-        log.info("Создан жанр {} для фильма {}", film.getGenres(), film.getName());
+        log.info("Указаны жанры {} для фильма {}", film.getGenres(), film.getName());
     }
 
     @Override
@@ -74,18 +76,22 @@ public class FilmDaoImpl implements FilmDao {
         String sqlQuery = "SELECT f.*,  rm.name AS mpa_name FROM films AS f " +
                 "LEFT JOIN rating_mpa AS rm ON f.rating_id = rm.id";
         log.info("Получен список всех фильмов");
-        return jdbcTemplate.query(sqlQuery, this::makeFilm);
+        List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm);
+        loadGenres(films);
+        return films;
     }
 
     @Override
     public Optional<Film> getFilmById(int id) {
         String sqlQuery = "SELECT f.*,  rm.name AS mpa_name FROM films AS f " +
                 "LEFT JOIN rating_mpa AS rm ON f.rating_id = rm.id WHERE f.id = ?";
-        List<Film> film = jdbcTemplate.query(sqlQuery, this::makeFilm, id);
-        if (film.size() == 0)
+        List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm, id);
+        if (films.size() == 0)
             return Optional.empty();
+        Film film = films.get(0);
+        loadGenres(film);
         log.info("Получен фильм с id = {}", id);
-        return Optional.of(film.get(0));
+        return Optional.of(film);
     }
 
     @Override
@@ -114,7 +120,7 @@ public class FilmDaoImpl implements FilmDao {
         }
         updateFilmGenre(film);
         log.info("Обновлен фильм с id = {}", film.getId());
-        return film;
+        return getFilmById(film.getId()).orElseThrow();
     }
 
     private void updateFilmGenre(Film film) {
@@ -134,5 +140,36 @@ public class FilmDaoImpl implements FilmDao {
                 mpa,
                 new LinkedHashSet<>()
         );
+    }
+
+    private void loadGenres(List<Film> films) {
+        final Map<Integer, Film> ids = films.stream().collect(Collectors.toMap(Film::getId, Function.identity()));
+        String inSql = String.join(",", Collections.nCopies(films.size(), "?"));
+        final String sqlQuery = "SELECT * from genres g, film_genre fg where fg.genre_id = g.id AND fg.film_id in (" + inSql + ")";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (!rs.wasNull()) {
+                final Film film = ids.get(rs.getInt("FILM_ID"));
+                film.getGenres().clear();
+                readGenres(rs).forEach(film::addGenre);
+            }
+        }, films.stream().map(Film::getId).toArray());
+    }
+
+    private void loadGenres(Film film) {
+        final String sqlQuery = "SELECT * from genres g, film_genre fg where fg.genre_id = g.id AND fg.film_id =?";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (!rs.wasNull()) {
+                film.getGenres().clear();
+                readGenres(rs).forEach(film::addGenre);
+            }
+        }, film.getId());
+    }
+
+    private List<Genre> readGenres(ResultSet rs) throws SQLException {
+        List<Genre> genres = new ArrayList<>();
+        do {
+            genres.add(new Genre(rs.getInt("ID"), rs.getString("NAME")));
+        } while (rs.next());
+        return genres;
     }
 }

@@ -24,18 +24,15 @@ public class FilmService {
     private final LikeDao likeDao;
 
     public Film create(Film film) {
-        filmDao.createFilm(film);
-        return film;
+        return filmDao.createFilm(film);
     }
 
     public Film updateFilm(Film film) {
-        filmDao.updateFilm(film);
-        return film;
+        return filmDao.updateFilm(film);
     }
 
     public List<Film> getAllFilms() {
         List<Film> films = filmDao.getAllFilms();
-        genreDao.loadGenres(films);
         log.info("Всего получено {} фильмов", filmDao.getAllFilms().size());
         return films;
     }
@@ -44,7 +41,6 @@ public class FilmService {
 
         Film film = filmDao.getFilmById(filmId).orElseThrow(() ->
                 new NotFoundException("Фильм с id =" + filmId + " не найден"));
-        genreDao.loadGenres(List.of(film));
         log.info("Получен фильм с id = {} ", filmId);
         return film;
     }
