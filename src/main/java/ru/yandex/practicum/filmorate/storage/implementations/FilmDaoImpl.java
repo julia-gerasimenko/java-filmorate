@@ -18,8 +18,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -143,16 +141,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     private void loadGenres(List<Film> films) {
-        final Map<Integer, Film> ids = films.stream().collect(Collectors.toMap(Film::getId, Function.identity()));
-        String inSql = String.join(",", Collections.nCopies(films.size(), "?"));
-        final String sqlQuery = "SELECT * from genres g, film_genre fg where fg.genre_id = g.id AND fg.film_id in (" + inSql + ")";
-        jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (!rs.wasNull()) {
-                final Film film = ids.get(rs.getInt("FILM_ID"));
-                film.getGenres().clear();
-                readGenres(rs).forEach(film::addGenre);
-            }
-        }, films.stream().map(Film::getId).toArray());
+        films.forEach(this::loadGenres);
     }
 
     private void loadGenres(Film film) {
