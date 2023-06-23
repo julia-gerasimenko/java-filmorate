@@ -2,22 +2,22 @@ package ru.yandex.practicum.filmorate.storage.implementations;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmDao;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 
 @Component
@@ -41,8 +41,32 @@ public class FilmDaoImpl implements FilmDao {
             return ps;
         }, id);
         film.setId(Objects.requireNonNull(id.getKey()).intValue());
+        createFilmGenre(film);
         log.info("Добавлен новый фильм с id = {}", film.getId());
         return film;
+    }
+
+    private void createFilmGenre(Film film) {
+        if (film.getGenres() == null || film.getGenres().isEmpty()) {
+            return;
+        }
+        String sql = "INSERT INTO film_genre (film_id, genre_id) " +
+                "VALUES(?,?)";
+        List<Genre> genres = new ArrayList<>(film.getGenres());
+        jdbcTemplate.batchUpdate(sql,
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(@NotNull PreparedStatement ps, int i) throws SQLException {
+                        ps.setLong(1, film.getId());
+                        ps.setLong(2, genres.get(i).getId());
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        return film.getGenres().size();
+                    }
+                });
+        log.info("Создан жанр {} для фильма {}", film.getGenres(), film.getName());
     }
 
     @Override
@@ -83,12 +107,21 @@ public class FilmDaoImpl implements FilmDao {
                 "duration = ?," +
                 "rating_id = ?" +
                 "WHERE id = ?";
-        int count = jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(),
-                film.getMpa().getId(), film.getId());
-        if (count == 0)
+        int count = jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(),
+                film.getDuration(), film.getMpa().getId(), film.getId());
+        if (count == 0) {
             throw new NotFoundException("Фильм не найден");
+        }
+        updateFilmGenre(film);
         log.info("Обновлен фильм с id = {}", film.getId());
         return film;
+    }
+
+    private void updateFilmGenre(Film film) {
+        String sqlQueryGenres = "DELETE FROM film_genre WHERE film_id = ?";
+        jdbcTemplate.update(sqlQueryGenres, film.getId());
+        this.createFilmGenre(film);
+        log.info("обновлены жанры фильма {}", film.getName());
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {

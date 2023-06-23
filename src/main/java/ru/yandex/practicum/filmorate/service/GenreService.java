@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreDao;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -23,16 +22,9 @@ public class GenreService {
 
     public Genre getGenreById(Integer id) {
         log.info("Поиск жанра по id {}", id);
-        Optional<Genre> genre = genreDao.getGenreById(id);
-        if (genre.isEmpty()) {
-            throw new NotFoundException("Жанр с id {} не был найден" + id);
-        }
+        Genre genre = genreDao.getGenreById(id)
+                .orElseThrow(() -> new NotFoundException("Жанр с id {} не был найден" + id));
         log.info("Получен жанр по id = {}", id);
-        return genre.get();
-    }
-
-    public List<Genre> getGenres() {
-        log.info("Получены все жанры");
-        return genreDao.getAllGenres();
+        return genre;
     }
 }

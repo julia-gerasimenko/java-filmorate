@@ -23,17 +23,13 @@ public class FilmService {
     private final GenreDao genreDao;
     private final LikeDao likeDao;
 
-    public Film createFilm(Film film) {
+    public Film create(Film film) {
         filmDao.createFilm(film);
-        genreDao.createFilmGenre(film);
-        log.info("Фильм с id = {} создан", film.getId());
         return film;
     }
 
     public Film updateFilm(Film film) {
         filmDao.updateFilm(film);
-        genreDao.updateFilmGenre(film);
-        log.info("Фильм с id = {} обновлен", film.getId());
         return film;
     }
 

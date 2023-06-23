@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Builder
 @AllArgsConstructor
@@ -36,12 +36,9 @@ public class Film {
     @Valid
     @NotNull
     private Mpa mpa;
-    private LinkedHashSet<Genre> genres;
+    private Set<Genre> genres;
 
     public void addGenre(Genre genre) {
-        if (genres == null) {
-            genres = new LinkedHashSet<>();
-        }
         genres.add(genre);
     }
 }
