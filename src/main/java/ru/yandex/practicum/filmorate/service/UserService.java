@@ -1,26 +1,21 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.implementations.FriendDaoImpl;
+import ru.yandex.practicum.filmorate.storage.implementations.UserDaoImpl;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserService {
-    private final UserStorage userStorage;
-
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
+    private final UserDaoImpl userStorage;
+    private final FriendDaoImpl friendStorage;
 
     public User createUser(User user) {
         validateUserName(user);
@@ -47,28 +42,29 @@ public class UserService {
     }
 
 
-    public User addFriend(Long id, Long friendId) {
-        User user = getUserById(id);
-        if (user.getFriends().contains(friendId)) {
-            log.info("Пользователь с id " + id
-                    + " и пользователь с id " + friendId + "уже являются друзьями");
-            throw new ValidationException(HttpStatus.BAD_REQUEST, "Пользователь с id " + id
-                    + " и пользователь с id " + friendId + "уже являются друзьями");
+    public void addFriend(Long id, Long friendId) {
+        try {
+            friendStorage.addFriend(id, friendId);
+        } catch (Exception ex) {
+            throw new NotFoundException("User or friend not found");
         }
-        return userStorage.addFriend(id, friendId);
+        log.info("Друг с id = {} {} {}", friendId, " был добавлен пользователю с id = ", id);
+        log.info("Друг с id = {} {} {}", id, " был добавлен пользователю с id = ", friendId);
     }
 
-    public User removeFriendById(long id, long friendId) {
-        return userStorage.removeFriendById(id, friendId);
+    public void removeFriendById(long id, long friendId) {
+        log.info("Друг с id = {}{}{}", friendId, " был удален из друзей у пользователя с id = ", id);
+        friendStorage.deleteFriend(id, friendId);
     }
 
-    public List<Optional<User>> getAllFriends(long id) {
-        log.info("Получено всего {} друзей у пользователя с id = {}", userStorage.getAllFriends(id).size(), id);
-        return userStorage.getAllFriends(id);
+    public List<User> getAllFriends(long id) {
+        log.info("Получено всего {} друзей у пользователя с id = {}", friendStorage.getAllFriends(id).size(), id);
+        return friendStorage.getAllFriends(id);
     }
 
-    public List<Optional<User>> getCommonFriends(long userId, long friendId) {
-        return userStorage.getCommonFriends(userId,friendId);
+    public List<User> getCommonFriends(long userId, long friendId) {
+        log.info("Получены общие друзья пользователей с  id = {}, {}", userId, friendId);
+        return friendStorage.getCommonFriends(userId, friendId);
     }
 
     public void validateUserName(User user) {
